@@ -2,3 +2,4 @@ kubectlkey.pem
 rootkeys
 kubernets-dashboard.yaml
 terraform_machine
+gitManual.txt
