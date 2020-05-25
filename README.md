@@ -1,2 +1,3 @@
 # kubeVM
-scripts to create and install a kubernets instance in a Virtual Machine at AWS
+scripts to manage a not free-tier instance in at AWS
+Was installed a kubernetes instance in this VM
