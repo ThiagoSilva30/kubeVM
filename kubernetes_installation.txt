@@ -1,0 +1,63 @@
+#My installation guide kubernetes in linux - version 15 - stable
+
+#Runtime installation - Docker;
+
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install -y docker-ce=18.06.1~ce~3-0~ubuntu
+
+sudo usermod -aG docker $USER
+
+#Kubernetes installation - Version 15;
+
+sudo su
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+apt-get update
+
+apt-get install -y kubelet=1.15.3-00 kubeadm=1.15.3-00 kubectl=1.15.3-00
+apt-mark hold kubelet kubeadm kubectl
+exit
+
+#Cluster - initialising;
+
+kubeadm init --pod-network-cidr=10.244.0.0/16
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+#Network add-on; 
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/62e44c867a2846fefb68bd5f178daf4da3095ccb/Documentation/kube-flannel.yml
+
+#If you want use the master node as worker, execute the command below;
+
+kubectl taint nodes --all node-role.kubernetes.io/master-
+
+#First deploy via yaml;
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v1.10.1/src/deploy/recommended/kubernetes-dashboard.yaml
+
+#Expose your deploy. Verify the ports;
+
+kubectl expose deployment kubernetes-dashboard --name=kubernetes-dashboard-nodeport --port=<port> --target-port=<port> --type=NodePort -n kube-system
+
+#Creating a service account 'kubeadmin' and associating the role 'cluster-admin'
+
+kubectl create serviceaccount kubeadmin -n kube-system 
+kubectl create clusterrolebinding kubeadmin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:kubeadmin
+
+#Get the token of the user;
+
+kubectl describe sa kubeadmin -n kube-system
+kubectl get secret <TOKEN-ID> -n kube-system -o yaml
+
+#Convert the token to base64;
+
+echo <TOKEN> | base64 --decode
+
+#Copy the token and paste in the access page of the kubernetes.
